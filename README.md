@@ -40,6 +40,52 @@
      Six or seven steps — this is the trace you wrote in Milestone 1. -->
 
 
+1. **Receive submission:** The service receives a `POST /submit` request containing the writer's text and `creator_id`.
+2. **Validate input:** The service checks that the required fields are present and that the submitted text is usable.
+3. **Run semantic detection:** The text is passed to `detector.py`, which uses a pretrained local model to analyze the text and produce a detection score.
+4. **Analyze writing style:** The text is passed to `stylometry.py`, which measures writing characteristics such as sentence-length variation, word variety, and punctuation density.
+5. **Combine signals:** The outputs from the semantic detector and stylometry analysis are passed to `scoring.py`, where `combine_signals` combines the two signals into an overall confidence score and guess.
+6. **Assign a label and record the result:** The score is mapped to one of three plain-English labels: high-confidence AI, high-confidence human, or unsure. The service generates a `content_id` and records the decision in the audit log.
+7. **Return the result and handle appeals:** The service returns the `content_id`, guess, confidence score, and label to the writer. If the writer disagrees, they can submit a `POST /appeal` request with the `content_id` and their reasoning. The service records the appeal and changes the item's status to `under_review` without automatically running detection again.  
+
+### False Positive Trace
+
+A false positive occurs when a human writer submits their own original work, but the system incorrectly classifies it as AI-generated.
+
+1. **Submission:** A writer submits original work through `POST /submit`.
+2. **Model signal:** The semantic detector identifies language patterns that resemble AI-generated text and produces a higher AI score.
+3. **Style signal:** The stylometry analysis also detects consistent sentence lengths and predictable vocabulary, which contribute to an AI-like style score.
+4. **Combined score:** The scoring system combines both signals and produces a score that falls into the high-confidence AI range.
+5. **Incorrect label:** The writer receives a high-confidence AI label even though they wrote the text themselves.
+6. **Appeal:** The writer submits `POST /appeal` with the content ID and an explanation that the work is original.
+7. **Under review:** The service records the appeal and changes the item's status to `under_review`. The original detection result is preserved, and the system does not automatically run detection again.
+
+### Endpoint Shapes
+
+**POST /submit**
+
+Accepts a JSON request containing:
+- `text`: The content submitted by the writer.
+- `creator_id`: The ID of the writer submitting the content.
+
+Returns a JSON response containing:
+- `content_id`: A unique identifier for the submission.
+- `guess`: The system's prediction (AI or human).
+- `confidence`: The confidence score associated with the prediction.
+- `label`: A plain-English explanation of the result.
+
+**POST /appeal**
+
+Accepts a JSON request containing:
+- `content_id`: The ID of the submission being appealed.
+- `reasoning`: The writer's explanation for why they disagree with the result.
+
+Returns a JSON response containing:
+- `content_id`: The ID of the appealed submission.
+- `status`: The updated status (`under_review`).
+- `message`: Confirmation that the appeal was recorded.
+
+
 
 ---
 
@@ -55,17 +101,29 @@
 
 **What it measures:**
 
+The model analyzes the text and estimates whether its language patterns are more characteristic of AI-generated or human-written text.
+
 **Why that might differ between human and AI writing:**
 
+AI-generated writing can contain patterns that differ from natural human writing, such as predictable phrasing or consistent language patterns. The model attempts to recognize these differences based on patterns it learned during training.
+
 **What it can't see:**
+
+It cannot know who actually wrote the text or whether AI was used. It may incorrectly classify human writing that happens to resemble AI-generated writing, or AI-generated writing that has been heavily edited.
 
 ### Signal two — the style signal
 
 **What it measures:**
 
+The style signal analyzes measurable writing characteristics, including sentence-length variation, word variety (unique words compared to total words), and punctuation density.
+
 **Why that might differ between human and AI writing:**
 
+Human writing often has natural variation in sentence length, vocabulary, and punctuation. AI-generated writing may have more consistent or predictable patterns, although this is not always the case.
+
 **What it can't see:**
+
+It cannot determine who wrote the text or understand its meaning and context. Human writers can have consistent writing styles, and AI-generated text can be edited to include more natural variation. These characteristics alone cannot reliably establish authorship.
 
 ### The combining rule
 
