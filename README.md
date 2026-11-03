@@ -179,14 +179,19 @@ It cannot determine who wrote the text or understand its meaning and context. Hu
      two off the response, so leaving them out costs you next unit's
      diagnostics. -->
 
-```bash
-$ curl -X POST http://127.0.0.1:5000/submit \
-  -H "Content-Type: application/json" \
-  -d '{"text": "...", "creator_id": "..."}'
+```powershell
+curl.exe --% -i -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/json" -d "{\"text\":\"I like taking walks in the morning and getting coffee before work.\",\"creator_id\":\"test-user\"}"
 ```
 
 ```json
-
+{
+  "confidence": 0.5,
+  "content_id": "c_865619eaf44d",
+  "guess": "unsure",
+  "label": "not built yet",
+  "model_score": 0.6167,
+  "style_score": null
+}
 ```
 
 **An appeal**
@@ -204,11 +209,26 @@ $ curl -X POST http://127.0.0.1:5000/appeal \
 **What the log shows afterwards**
 
 ```bash
-$ curl "http://127.0.0.1:5000/log?limit=3"
+$ curl "http://127.0.0.1:5000/log?limit=1"
 ```
 
 ```json
-
+{
+  "count": 1,
+  "entries": [
+    {
+      "combined_score": null,
+      "content_id": "c_865619eaf44d",
+      "creator_id": "test-user",
+      "guess": null,
+      "label": null,
+      "model_score": 0.6167,
+      "status": "decided",
+      "style_score": null,
+      "timestamp": "2026-11-03T21:12:06+00:00"
+    }
+  ]
+}
 ```
 
 ---
