@@ -31,6 +31,8 @@ from flask import Flask, jsonify, request
 import audit
 import config
 import detector
+import scoring
+import stylometry
 
 app = Flask(__name__)
 
@@ -215,13 +217,18 @@ def submit():
             "message": "Text must be 10,000 characters or fewer."
         }), 400
     model_score = detector.model_signal(text)
+    style_score = stylometry.style_signal(text)
+    combined_score = round(scoring.combine_signals(model_score, style_score), 4)
 
     content_id = f"c_{uuid.uuid4().hex[:12]}"
 
     audit.log_decision(
         content_id=content_id,
         creator_id=creator_id,
+        guess="unsure",
         model_score=model_score,
+        style_score=style_score,
+        combined_score=combined_score,
         status="decided",
     )
 
@@ -229,10 +236,10 @@ def submit():
     return jsonify({
     "content_id": content_id,
     "guess": "unsure",
-    "confidence": 0.5,
+    "confidence": combined_score,
     "label": "not built yet",
     "model_score": model_score,
-    "style_score": None,
+    "style_score": style_score,
 }), 200
 
 

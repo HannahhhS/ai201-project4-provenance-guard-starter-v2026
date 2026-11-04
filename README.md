@@ -132,7 +132,26 @@ It cannot determine who wrote the text or understand its meaning and context. Hu
 
 **The rule:**
 
+The combined score is an equal-weight average of the two signals. Both signals point the same way (higher = more likely AI), so the average does too. When the signals disagree, the score lands between them, which usually puts it in the unsure band. Neither signal can push a submission to a confident label on its own; a high-confidence label needs both signals to lean the same way.
+
 **The numbers:**
+
+- `combined = 0.5 × model_score + 0.5 × style_score` (weights in `config.py`)
+- Style signal (`stylometry.py::style_signal`): an equal average of three measures, each scaled to 0–1 and flipped so higher means more AI:
+  - sentence-length spread (std dev ÷ mean), capped at 1.2: low spread → more AI
+  - type-token ratio (unique ÷ total words): low variety → more AI
+  - punctuation density (`, ; : — ( )` per word), capped at 0.15: less punctuation → more AI
+- The caps are heuristic choices from a handful of test samples, not established thresholds.
+- Known limitation: type-token ratio falls as text gets longer, so longer submissions score more AI-like on the style signal regardless of who wrote them. A one-sentence submission also gets zero spread, which reads as AI-like.
+
+Results on the four Milestone 4 inputs:
+
+| Input | model_score | style_score | combined |
+|---|---|---|---|
+| Clearly AI | 0.7544 | 0.506 | 0.6302 |
+| Clearly human | 0.4445 | 0.2293 | 0.3369 |
+| Formal human (my lab report) | 0.5504 | 0.6574 | 0.6039 |
+| Lightly edited AI | 0.3489 | 0.4081 | 0.3785 |
 
 **Where it lives:** `scoring.py::combine_signals`
 
@@ -141,6 +160,7 @@ It cannot determine who wrote the text or understand its meaning and context. Hu
 
 **A case where my two signals split, and what my rule does with it:**
 
+My formal human sample (a paragraph from a lab report I wrote) split the two signals. The style signal scored it 0.6574, leaning AI, because the paragraph is long (190 words, which lowers word variety), its sentences are fairly even in length, and it uses little punctuation. The model signal scored it 0.5504, close to the middle. The average was 0.6039, in the unsure band, so the style signal alone couldn't label my own writing as AI. It was a narrow result, though. A second paragraph from the same report scored 0.6834 combined (model 0.7080, style 0.6588), where both signals leaned AI, and it would be labelled high-confidence AI: a false positive on my own writing.
 
 
 ---
