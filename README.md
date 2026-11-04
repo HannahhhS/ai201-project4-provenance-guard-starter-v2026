@@ -174,15 +174,16 @@ My formal human sample (a paragraph from a lab report I wrote) split the two sig
 
 | Label | Score range | The exact text a reader sees |
 |---|---|---|
-| high-confidence human |  |  |
-| unsure |  |  |
-| high-confidence AI |  |  |
+| high-confidence human | 0.00 – 0.35 | Your sample was probably written by a human. |
+| unsure | 0.35 – 0.65 | Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you. |
+| high-confidence AI | 0.65 – 1.00 | This sample was most likely written by AI. However, this checker system can make mistakes. If you wrote the sample yourself, please submit an appeal. |
 
 **Why I worded the "unsure" one this way:**
 <!-- It's the hardest of the three. It has to admit uncertainty without
      sounding like an accusation, because the person reading it may well have
      written every word themselves. -->
 
+The first sentence admits that the system is uncertain. The second sentence reassures the writer that an unsure result doesn't automatically mean their work is AI-written, and makes clear there's nothing else they need to do.
 
 
 ---
@@ -218,26 +219,68 @@ curl.exe --% -i -X POST http://127.0.0.1:5000/submit -H "Content-Type: applicati
 
 ```
 
-**An appeal**
+*Milestone 5: both signals, combined score and real label*
 
-```bash
-$ curl -X POST http://127.0.0.1:5000/appeal \
-  -H "Content-Type: application/json" \
-  -d '{"content_id": "...", "reasoning": "..."}'
+```powershell
+curl.exe --% -i -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/json" -d "{\"text\":\"Regular exercise is one of the most important things you can do for your health. It helps to improve your physical fitness and your overall well-being. Exercise can also help to reduce stress and improve your mood. Many people find that regular physical activity helps them to sleep better at night. It is important to find a type of exercise that you enjoy doing. This will make it easier to stay motivated and keep a regular routine. Overall, regular exercise is a simple and effective way to improve your quality of life.\",\"creator_id\":\"chatbot-ai\"}"
 ```
 
 ```json
+{
+  "confidence": 0.8471,
+  "content_id": "c_1fff4a8f34b3",
+  "guess": "ai",
+  "label": "This sample was most likely written by AI. However, this checker system can make mistakes. If you wrote the sample yourself, please submit an appeal.",
+  "model_score": 0.9536,
+  "style_score": 0.7405
+}
+```
 
+**An appeal**
+
+```powershell
+curl.exe --% -i -X POST http://127.0.0.1:5000/appeal -H "Content-Type: application/json" -d "{\"content_id\":\"c_1fff4a8f34b3\",\"reasoning\":\"I wrote this myself and did not use AI.\"}"
+```
+
+```json
+{
+  "content_id": "c_1fff4a8f34b3",
+  "message": "Your appeal has been recorded and this submission is now under review.",
+  "status": "under_review"
+}
 ```
 
 **What the log shows afterwards**
 
-```bash
-$ curl "http://127.0.0.1:5000/log?limit=3"
+```powershell
+curl.exe -s "http://127.0.0.1:5000/log?limit=2"
 ```
 
 ```json
-
+{
+  "count": 2,
+  "entries": [
+    {
+      "combined_score": 0.8471,
+      "content_id": "c_1fff4a8f34b3",
+      "creator_id": "chatbot-ai",
+      "guess": "ai",
+      "label": "This sample was most likely written by AI. However, this checker system can make mistakes. If you wrote the sample yourself, please submit an appeal.",
+      "model_score": 0.9536,
+      "status": "decided",
+      "style_score": 0.7405,
+      "timestamp": "2026-11-04T05:14:27+00:00"
+    },
+    {
+      "content_id": "c_1fff4a8f34b3",
+      "creator_id": "chatbot-ai",
+      "event": "appeal",
+      "reasoning": "I wrote this myself and did not use AI.",
+      "status": "under_review",
+      "timestamp": "2026-11-04T05:16:28+00:00"
+    }
+  ]
+}
 ```
 
 ---

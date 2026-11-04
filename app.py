@@ -219,25 +219,26 @@ def submit():
     model_score = detector.model_signal(text)
     style_score = stylometry.style_signal(text)
     combined_score = round(scoring.combine_signals(model_score, style_score), 4)
+    guess, label = scoring.score_to_label(combined_score)
 
     content_id = f"c_{uuid.uuid4().hex[:12]}"
 
     audit.log_decision(
         content_id=content_id,
         creator_id=creator_id,
-        guess="unsure",
+        guess=guess,
         model_score=model_score,
         style_score=style_score,
         combined_score=combined_score,
+        label=label,
         status="decided",
     )
 
-    # TODO: delete this and build the route.
     return jsonify({
     "content_id": content_id,
-    "guess": "unsure",
+    "guess": guess,
     "confidence": combined_score,
-    "label": "not built yet",
+    "label": label,
     "model_score": model_score,
     "style_score": style_score,
 }), 200
@@ -264,13 +265,32 @@ def appeal():
     wrong accusation and nothing at all.
     """
     payload = request.get_json(silent=True) or {}
+    content_id = payload.get("content_id")
+    reasoning = payload.get("reasoning")
 
-    # TODO: delete this and build the route.
+    entries = audit.entries_for(content_id) if isinstance(content_id, str) else []
+    if not entries:
+        return jsonify({
+            "error": "not_found",
+            "message": "No submission found with that content_id."
+        }), 404
+    if not isinstance(reasoning, str) or not reasoning.strip():
+        return jsonify({
+            "error": "bad_request",
+            "message": "Send JSON with a non-empty \"reasoning\"."
+        }), 400
+
+    audit.log_appeal(
+        content_id=content_id,
+        creator_id=entries[0].get("creator_id", "unknown"),
+        reasoning=reasoning,
+    )
+
     return jsonify({
-        "error": "not_implemented",
-        "message": "POST /appeal isn't built yet — see the TODO in app.py.",
-        "you_sent": payload,
-    }), 501
+        "content_id": content_id,
+        "status": "under_review",
+        "message": "Your appeal has been recorded and this submission is now under review.",
+    }), 200
 
 
 # ── Already works ─────────────────────────────────────────────────────────────
