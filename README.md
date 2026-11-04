@@ -70,9 +70,11 @@ Accepts a JSON request containing:
 
 Returns a JSON response containing:
 - `content_id`: A unique identifier for the submission.
-- `guess`: The system's prediction (AI or human).
-- `confidence`: The confidence score associated with the prediction.
+- `guess`: The system's prediction: `ai`, `human`, or `unsure`.
+- `confidence`: The combined score, from 0.0 (confidently human) to 1.0 (confidently AI).
 - `label`: A plain-English explanation of the result.
+- `model_score`: The model signal's score (0–1, higher = more likely AI).
+- `style_score`: The style signal's score (0–1, higher = more likely AI).
 
 **POST /appeal**
 
@@ -101,7 +103,7 @@ Returns a JSON response containing:
 
 **What it measures:**
 
-The model analyzes the text and estimates whether its language patterns are more characteristic of AI-generated or human-written text.
+How predictable the text is to a small language model (GPT-2), measured as perplexity. `detector.py::model_signal` turns perplexity into a 0–1 score: text the model finds easy to predict scores close to 1 (more likely AI), and text that surprises it scores close to 0 (more likely human).
 
 **Why that might differ between human and AI writing:**
 
@@ -109,7 +111,7 @@ AI-generated writing can contain patterns that differ from natural human writing
 
 **What it can't see:**
 
-It cannot know who actually wrote the text or whether AI was used. It may incorrectly classify human writing that happens to resemble AI-generated writing, or AI-generated writing that has been heavily edited.
+It cannot know who actually wrote the text or whether AI was used. It may incorrectly classify human writing that happens to resemble AI-generated writing, or AI-generated writing that has been heavily edited. Predictability isn't authorship: plain, formal, or step-by-step human writing is also very predictable. A paragraph from my own lab report scored 0.7080 on this signal, close to my clearly AI sample (0.7544).
 
 ### Signal two — the style signal
 
@@ -200,6 +202,8 @@ The first sentence admits that the system is uncertain. The second sentence reas
      two off the response, so leaving them out costs you next unit's
      diagnostics. -->
 
+*Milestone 3: earlier run with one signal only (the JSON below is the log entry it produced)*
+
 ```powershell
 curl.exe --% -i -X POST http://127.0.0.1:5000/submit -H "Content-Type: application/json" -d "{\"text\":\"I like to eat dark chocolate and drink matcha.\",\"creator_id\":\"test-user\"}"  
 ```
@@ -289,15 +293,15 @@ curl.exe -s "http://127.0.0.1:5000/log?limit=2"
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked Claude to implement the three style measures in `stylometry.py` (sentence-length spread, type-token ratio, punctuation density) one at a time, showing me each change before editing, and then to help me decide how to combine them into `style_signal`.
+- *What came back:* The three measures, tested on my samples. The results showed type-token ratio pointed the opposite way from what I'd assumed: my AI sample had the most varied vocabulary, not the least. Claude laid out three options for combining the measures, with the scores each would give my samples. It also explained why one of my formal human samples, a traffic-safety report, scored as AI on the model signal: its stock academic phrasing is very predictable to GPT-2.
+- *What I changed:* I chose to keep all three measures and flip word variety as originally planned, with caps of 1.2 for spread and 0.15 for punctuation, and documented them as heuristics rather than proven thresholds. I replaced the traffic report with a paragraph from my own lab report, because I couldn't be sure a teammate hadn't used AI on it. I also wrote up the length limitation in the README instead of tuning the numbers to fit four samples.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked Claude to check my three label sentences against the brief's requirements.
+- *What came back:* The human label was fine. The unsure label admitted uncertainty but didn't tell the writer what it meant for them, so "human or AI" could still read as suspicion. The AI label sounded certain and didn't tell the writer they could push back, even though my own lab report had already been labelled AI.
+- *What I changed:* I rewrote both myself. I added a second sentence to the unsure label saying it doesn't mean the work is AI-written and that no action is needed. I added to the AI label that the system can make mistakes and that the writer should appeal if they wrote it themselves. I kept "most likely", because the appeal sentence balances it.
 
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 
