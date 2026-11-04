@@ -1,3 +1,4 @@
 {"timestamp": "2026-11-01T04:15:21+00:00", "content_id": "c_0fe61e7cec8c", "creator_id": "test-user", "guess": null, "model_score": 0.0756, "style_score": null, "combined_score": null, "label": null, "status": "decided"}
 {"timestamp": "2026-11-01T04:25:56+00:00", "content_id": "c_dc6d9eb6d2d3", "creator_id": "test-user", "guess": null, "model_score": 0.6167, "style_score": null, "combined_score": null, "label": null, "status": "decided"}
 {"timestamp": "2026-11-03T21:12:06+00:00", "content_id": "c_865619eaf44d", "creator_id": "test-user", "guess": null, "model_score": 0.6167, "style_score": null, "combined_score": null, "label": null, "status": "decided"}
+{"timestamp": "2026-11-04T02:08:20+00:00", "content_id": "c_418d2f5b7252", "creator_id": "test-user", "guess": null, "model_score": 0.3193, "style_score": null, "combined_score": null, "label": null, "status": "decided"}
