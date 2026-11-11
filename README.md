@@ -476,17 +476,83 @@ whose work got caught by it:
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |
+| 1. My own writing labelled high-confidence AI | ≤ 1 of 10 | 1/10 | 1/10 | 1/10 | MET |
+| 2. AI average minus human average (5 each) | ≥ 0.30 | −0.038 | −0.038 | −0.038 | MISSED |
+| 3. All three labels reachable (50+ word paragraphs) | 3 of 3 | 2/3 | 2/3 | 2/3 | MISSED |
+| 4. Valid appeals recorded as `under_review`, original kept | 3 of 3 | 3/3 | 3/3 | 3/3 | MET |
+| 5. Bad input rejected with 400, no content_id | 7 of 7 | 7/7 | 7/7 | 7/7 | MET |
+
+Criteria 1, 2, 3 and 5 were run with `python run_eval.py --label before` → `results/run_2026-11-10_1651_before.md`. Criterion 4 was tested by hand in PowerShell (3 submits and 3 appeals per trial), because `run_eval.py` only calls `/submit`. All three trials came out identical, as expected, since neither signal is random.
 
 **Real output from one trial**, pasted as text, naming the file and function
 that produced it:
 
-```json
+All from Trial 1. Criteria 1, 2, 3 and 5 are from `results/run_2026-11-10_1651_before.md`, produced by `run_eval.py::main` sending each body to `app.py::submit`. Trials 2 and 3 were identical.
 
+**Criterion 1 — my own writing** (1 of 10 labelled AI: the 9th piece, astrophotography paragraph 5)
+
+```json
+{"status": 200, "guess": "unsure", "confidence": 0.643, "model_score": 0.6561, "style_score": 0.6298, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "The type of astrophotography chosen for the final project was deep sky"}
+{"status": 200, "guess": "unsure", "confidence": 0.6178, "model_score": 0.6206, "style_score": 0.615, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "This course has allowed me to grow alot in my awareness of the new tes"}
+{"status": 200, "guess": "unsure", "confidence": 0.5526, "model_score": 0.5198, "style_score": 0.5854, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "Data mining was used to obtain these images. The telescope used was th"}
+{"status": 200, "guess": "unsure", "confidence": 0.4779, "model_score": 0.3988, "style_score": 0.557, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "A few things that were new and interesting to learn was about the actu"}
+{"status": 200, "guess": "unsure", "confidence": 0.5397, "model_score": 0.5984, "style_score": 0.481, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "Calibration frames were used to remove any sort of artifacts from the "}
+{"status": 200, "guess": "unsure", "confidence": 0.5399, "model_score": 0.5314, "style_score": 0.5484, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "Another area which was interesting to know was the study of the pascha"}
+{"status": 200, "guess": "unsure", "confidence": 0.6039, "model_score": 0.5504, "style_score": 0.6574, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "Registration was needed to align the stars in the images.  Due to the "}
+{"status": 200, "guess": "unsure", "confidence": 0.6059, "model_score": 0.6206, "style_score": 0.5912, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "Another part of this class that I appreciated was looking into specifi"}
+{"status": 200, "guess": "ai", "confidence": 0.6834, "model_score": 0.708, "style_score": 0.6588, "label": "This sample was most likely written by AI. However, this checker system can make mistakes. If you wrote the sample yourself, please submit an appeal.", "sent": "After stacking was done for each filter, I moved on to stretching. Eac"}
+{"status": 200, "guess": "unsure", "confidence": 0.6175, "model_score": 0.6334, "style_score": 0.6015, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "Towards the end of the semester, I also enjoyed looking into the Pauli"}
+```
+
+**Criterion 2 — AI samples vs. my writing** (AI average 0.5286, human average 0.5662, gap −0.0376)
+
+AI samples:
+
+```json
+{"status": 200, "guess": "unsure", "confidence": 0.4766, "model_score": 0.426, "style_score": 0.5272, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "For my astrophotography final project, I wanted a target that would re"}
+{"status": 200, "guess": "unsure", "confidence": 0.5181, "model_score": 0.4553, "style_score": 0.5809, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "Calibration frames are what turn raw astrophotography exposures into c"}
+{"status": 200, "guess": "unsure", "confidence": 0.5156, "model_score": 0.5274, "style_score": 0.5038, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "To process my nebula image, I started with separate grayscale datasets"}
+{"status": 200, "guess": "unsure", "confidence": 0.5296, "model_score": 0.6162, "style_score": 0.4431, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "This course changed the way I think about how the New Testament came t"}
+{"status": 200, "guess": "unsure", "confidence": 0.6033, "model_score": 0.6221, "style_score": 0.5844, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "Studying the historical Jesus and Paul’s letters affected my faith in "}
+```
+
+Human samples (my first five pieces, same output as the first five lines under Criterion 1):
+
+```json
+{"status": 200, "guess": "unsure", "confidence": 0.643, "model_score": 0.6561, "style_score": 0.6298, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "The type of astrophotography chosen for the final project was deep sky"}
+{"status": 200, "guess": "unsure", "confidence": 0.6178, "model_score": 0.6206, "style_score": 0.615, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "This course has allowed me to grow alot in my awareness of the new tes"}
+{"status": 200, "guess": "unsure", "confidence": 0.5526, "model_score": 0.5198, "style_score": 0.5854, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "Data mining was used to obtain these images. The telescope used was th"}
+{"status": 200, "guess": "unsure", "confidence": 0.4779, "model_score": 0.3988, "style_score": 0.557, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "A few things that were new and interesting to learn was about the actu"}
+{"status": 200, "guess": "unsure", "confidence": 0.5397, "model_score": 0.5984, "style_score": 0.481, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "sent": "Calibration frames were used to remove any sort of artifacts from the "}
+```
+
+**Criterion 3 — label coverage** (all 15 texts above; 14 unsure, 1 ai, 0 human). The `c3 label coverage` scenario sends the same 15 texts, and the output matches the entries above line for line. The only non-unsure result:
+
+```json
+{"status": 200, "guess": "ai", "confidence": 0.6834, "model_score": 0.708, "style_score": 0.6588, "label": "This sample was most likely written by AI. However, this checker system can make mistakes. If you wrote the sample yourself, please submit an appeal.", "sent": "After stacking was done for each filter, I moved on to stretching. Eac"}
+```
+
+**Criterion 4 — appeals**, Trial 1, from `logs/audit.jsonl`. The decisions were written by `app.py::submit` (`audit.log_decision`) and the appeals by `app.py::appeal` (`audit.log_appeal`):
+
+```json
+{"timestamp": "2026-11-10T23:37:00+00:00", "content_id": "c_a29fd3860974", "creator_id": "c4_t1_a", "guess": "human", "model_score": 0.1801, "style_score": 0.5042, "combined_score": 0.3422, "label": "Your sample was probably written by a human.", "status": "decided"}
+{"timestamp": "2026-11-10T23:37:00+00:00", "content_id": "c_3dc335856b7b", "creator_id": "c4_t1_b", "guess": "unsure", "model_score": 0.4494, "style_score": 0.6782, "combined_score": 0.5638, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "status": "decided"}
+{"timestamp": "2026-11-10T23:37:01+00:00", "content_id": "c_f9367e764c49", "creator_id": "c4_t1_c", "guess": "unsure", "model_score": 0.4614, "style_score": 0.6194, "combined_score": 0.5404, "label": "Unable to determine if this sample was written by a human or AI. This doesn't mean that the sample is AI-written, and no further action is needed from you.", "status": "decided"}
+{"timestamp": "2026-11-10T23:37:01+00:00", "content_id": "c_a29fd3860974", "creator_id": "c4_t1_a", "event": "appeal", "status": "under_review", "reasoning": "I wrote this myself."}
+{"timestamp": "2026-11-10T23:37:01+00:00", "content_id": "c_3dc335856b7b", "creator_id": "c4_t1_b", "event": "appeal", "status": "under_review", "reasoning": "I wrote this myself."}
+{"timestamp": "2026-11-10T23:37:01+00:00", "content_id": "c_f9367e764c49", "creator_id": "c4_t1_c", "event": "appeal", "status": "under_review", "reasoning": "I wrote this myself."}
+```
+
+**Criterion 5 — bad input** (7 of 7 returned 400 with no content_id)
+
+```json
+{"status": 400, "guess": null, "confidence": null, "model_score": null, "style_score": null, "label": null, "sent": "{\"creator_id\": \"eval_bad_missing\"}"}
+{"status": 400, "guess": null, "confidence": null, "model_score": null, "style_score": null, "label": null, "sent": "(empty text)"}
+{"status": 400, "guess": null, "confidence": null, "model_score": null, "style_score": null, "label": null, "sent": "   \n\t  "}
+{"status": 400, "guess": null, "confidence": null, "model_score": null, "style_score": null, "label": null, "sent": "{\"text\": 12345, \"creator_id\": \"eval_bad_number\"}"}
+{"status": 400, "guess": null, "confidence": null, "model_score": null, "style_score": null, "label": null, "sent": "{\"text\": [\"a\", \"list\"], \"creator_id\": \"eval_bad_list\"}"}
+{"status": 400, "guess": null, "confidence": null, "model_score": null, "style_score": null, "label": null, "sent": "{\"text\": null, \"creator_id\": \"eval_bad_null\"}"}
+{"status": 400, "guess": null, "confidence": null, "model_score": null, "style_score": null, "label": null, "sent": "word word word word word word word word word word word word word word "}
 ```
 
 **Diagnoses**
