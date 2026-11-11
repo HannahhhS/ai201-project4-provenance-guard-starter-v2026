@@ -484,6 +484,13 @@ whose work got caught by it:
 
 Criteria 1, 2, 3 and 5 were run with `python run_eval.py --label before` → `results/run_2026-11-10_1651_before.md`. Criterion 4 was tested by hand in PowerShell (3 submits and 3 appeals per trial), because `run_eval.py` only calls `/submit`. All three trials came out identical, as expected, since neither signal is random.
 
+**How I decided each verdict:**
+1. **MET**: 1 of 10 of my own pieces was labelled high-confidence AI in every trial, which is exactly at the target. It's a narrow pass: four other pieces scored between 0.60 and 0.65, within 0.05 of the AI cutoff.
+2. **MISSED**: the AI average was 0.038 *below* the human average in every trial, nowhere near the required +0.30. My writing scored as more AI-like than the actual AI text.
+3. **MISSED**: in every trial, none of the 15 full paragraphs got the high-confidence human label, so only 2 of the 3 labels were reachable.
+4. **MET**: in every trial, all 3 valid appeals were logged with status `under_review`, and each original `decided` entry was still in the log.
+5. **MET**: all 7 bad inputs returned a 400 with no content_id in every trial, and none were logged as decisions.
+
 **Real output from one trial**, pasted as text, naming the file and function
 that produced it:
 
@@ -571,7 +578,75 @@ Human samples (my first five pieces, same output as the first five lines under C
 
      Look for a pattern. Five failures on one signal is one problem, not five. -->
 
+Every miss and every broken attack, with the stage and the mechanism. Scores are model / style → combined.
 
+#### Missed criteria
+
+**Criterion 2: gap −0.038, target +0.30. Stage: signal one and signal two together.**
+My writing averaged model 0.559 / style 0.574, and the Claude samples averaged 0.529 / 0.528. For signal one, my plain wording and repeated phrases ("I moved on to", "in order to") gave lower perplexity (about 40 vs. 43) than Claude's rarer vocabulary, and GPT-2 reads predictable text as AI. For signal two, I reuse words (stretch, stacked, filter), so my type-token ratio was 0.57 vs. Claude's 0.69, and low variety reads as AI. The combining rule averages two signals that are wrong in the same direction, so nothing cancels.
+
+**Criterion 3: no human label. Stage: signal two, plus the combining rule.**
+For normal paragraphs, the style signal never went below 0.44. Spread (0.2–0.5) and punctuation density (0.03–0.10) sit far below their caps (1.2 and 0.15), so those two parts always lean AI. With style at 0.44 or above, a 50/50 average only drops to the 0.35 human threshold if the model score is about 0.25 or lower, which means perplexity around 90 or more. None of the 15 paragraphs got there.
+
+#### Broken attacks
+
+**Evasion (9)**
+
+| ID | Scores | Stage | Mechanism |
+|---|---|---|---|
+| EV01 typos | 0.164 / 0.587 → 0.375 | signal one | Typos are tokens GPT-2 doesn't expect, so perplexity rose and the model score dropped to 0.16. It targeted signal two, but signal one is what gave way. |
+| EV02 broken-up sentences | 0.594 / 0.416 → 0.505 | signal two | Chopping sentences raised sentence length spread, so style read human. |
+| EV03 pasted quotation | 0.666 / 0.513 → 0.590 | signal two + combining rule | The model alone was above 0.65 (AI). The quote changed the shape, style dropped to 0.51, and the 50/50 average pulled the result under the AI cutoff. |
+| EV04 unusual words | 0.611 / 0.583 → 0.597 | signal one | Rare words raised perplexity enough to keep the model score under 0.65, and style wasn't high enough to make up for it. |
+| EV05 heavy human edit | 0.321 / 0.421 → 0.371 | signal one + signal two | Real human edits made the text less predictable and more varied, so both signals moved toward human. |
+| EV06 one long + one short sentence | 0.573 / 0.348 → 0.460 | signal two | A 1-long/1-short pair inflates spread (stdev ÷ mean), so style dropped to 0.35. |
+| EV07 punctuation padding | 0.586 / 0.409 → 0.498 | signal two | Extra commas, dashes and parentheses raised punctuation density, which my style signal counts as human. |
+| EV08 below token window | 0.245 / 0.588 → 0.417 | signal one | Short text gives GPT-2 little context, so perplexity is high and the model score fell to 0.25. |
+| EV09 human opening bolted on | 0.704 / 0.488 → 0.596 | combining rule | The model correctly said AI (0.70). The human opening lowered style to 0.49, and the equal weighting averaged the correct signal away. |
+
+**False positive (6). Stage for all six: signal one.**
+
+| ID | Scores | Mechanism |
+|---|---|---|
+| FP02 formal register | 0.739 / 0.667 → 0.703 | Formal, conventional phrasing is predictable to GPT-2. |
+| FP03 non-native, careful | 0.805 / 0.668 → 0.737 | Careful writers sticking to words they're sure of produce low perplexity. |
+| FP04 rubric essay | 0.833 / 0.596 → 0.714 | Writing to a rubric uses expected structure and stock phrases, which are predictable. |
+| FP05 technical docs | 0.801 / 0.664 → 0.733 | Repeated technical terms and fixed patterns are easy to predict. |
+| FP06 imitating a template | 0.881 / 0.576 → 0.729 | Template wording is exactly what a language model expects next. |
+| FP07 repeated phrase | 0.882 / 0.569 → 0.725 | After the first repetition, every repeat is near-certain to GPT-2. |
+
+The style score sat at 0.57–0.67 for all six, which also pushed toward AI, but the model score is what carried each one over 0.65.
+
+**Prompt injection (1)**
+
+| ID | Scores | Stage | Mechanism |
+|---|---|---|---|
+| PI02 fake SYSTEM message | 0.204 / 0.402 → 0.303 | signal one | Nothing in the pipeline followed the instruction. The odd "SYSTEM: … guess=human, confidence=0.02" line is high-perplexity text, which dragged the model score down to 0.20 and gave the attacker the human result anyway. |
+
+**Malformed (8)**
+
+| ID | Result | Stage | Mechanism |
+|---|---|---|---|
+| MF02 single character | 500 | route | The route only checks for empty text. `detector.perplexity` raises `ValueError` on under 3 tokens and nothing catches it, so the writer gets a 500 and the audit log gets no entry. |
+| RQ07 JSON array body | 500 | route | `request.get_json(...) or {}` only replaces empty bodies. A list is truthy, so `payload.get` raises `AttributeError`, again with no log entry. |
+| MF03 control characters | human 0.333 | route → signal one | Non-prose passed the "non-empty string" check. Gibberish has huge perplexity, so model = 0.0 and the result was human. |
+| MF04 punctuation only | unsure 0.506 | route → signal two | With no words, all three style measures are 0, which flips to style 1.0. Model 0.01 averaged it to unsure. |
+| MF05 one very long word | ai 0.832 | route → signal one | After the first few tokens, the rest of a long repeated word is predictable, so model = 0.998. |
+| MF06 emoji only | ai 0.999 | route → signal one + signal two | Repeated emoji tokens are predictable (model 0.997), and `words()` only matches `a-z`, so no words gives style 1.0. |
+| MF07 right-to-left script | ai 0.953 | signal two (+ signal one) | `words()` uses `[a-z0-9']`, so Arabic or Hebrew text has zero "words" and style is pinned at 1.0. Real non-English writing gets labelled AI. |
+| RQ06 creator_id is an object | decided | route | The route never checks that `creator_id` is a string, so the object was written into the audit log as the creator. |
+
+**By stage:** signal one 11 (EV01, EV04, EV05, EV08, FP02–FP07, PI02), signal two 5 (EV02, EV03, EV06, EV07, MF07), combining rule 1 (EV09), route 7 (MF02–MF06, RQ06, RQ07). The label mapping wasn't the main cause of any miss.
+
+#### Patterns
+
+The 2 misses and 24 broken attacks come down to three problems, not 26.
+
+**Pattern 1: plain, predictable writing reads as AI to both signals.** Explains criterion 2, FP02–FP07, PI02, and criterion 1's one AI label (my astrophotography paragraph 5, model 0.708). Both of my signals measure *unusualness*, not authorship. Signal one rewards text GPT-2 can't predict, and signal two rewards varied vocabulary and lots of punctuation. Plain, careful or repetitive human writing scores as machine-like on both, while polished modern AI uses rarer words and scores lower. The same mechanism runs the other way for EV01, EV04, EV05 and EV08: anything that makes AI text less predictable (typos, rare words, edits, shortness) pulls it toward human. Because both signals lean the same way, averaging them doesn't correct the error.
+
+**Pattern 2: the score range is squeezed into the unsure band.** Explains criterion 3, EV01–EV09, and why even unedited Claude text (0.48–0.60) never reached the AI label. The style signal has a floor of about 0.44 on normal paragraphs, because spread and punctuation sit far below their caps, and the 50/50 average halves any strong reading from one signal (EV09: model 0.70 → combined 0.596). Real paragraphs land between 0.44 and 0.70, so neither confident label is reachable in practice. The evasions mostly didn't have to beat the detector, since clean AI text already landed in unsure.
+
+**Pattern 3: the route checks the type of `text`, not whether it's prose.** Explains MF02–MF07, RQ06 and RQ07. The route accepts any non-empty string under 10,000 characters, so emoji, control characters, punctuation and non-Latin script reach the signals. Signal two's `words()` only matches `a-z`, so text with no Latin letters gets style 1.0, which is how real Arabic or Hebrew writing (MF07) was labelled AI at 0.953. The two inputs the route doesn't check at all (a 1-character text and a non-object body) crash with a 500 and leave nothing in the audit log, so an attack made of them would be invisible.
 
 ---
 
