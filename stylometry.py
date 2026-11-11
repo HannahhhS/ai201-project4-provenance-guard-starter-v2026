@@ -134,9 +134,11 @@ def style_signal(text: str) -> float:
     """
     # Caps are heuristics from a handful of test samples, not established
     # thresholds. Each measure is scaled to 0–1 where higher means more human.
-    spread = min(sentence_length_spread(text), 1.2) / 1.2
+    # Unit 8, Milestone 5: caps tightened from 1.2 / 0.15 to 0.6 / 0.08. Real
+    # paragraphs never got near the old caps, which pinned style above ~0.44.
+    spread = min(sentence_length_spread(text), 0.6) / 0.6
     variety = type_token_ratio(text)
-    punct = min(punctuation_density(text), 0.15) / 0.15
+    punct = min(punctuation_density(text), 0.08) / 0.08
 
     # All three point toward human, so flip each to make higher mean more AI.
     return round(((1 - spread) + (1 - variety) + (1 - punct)) / 3, 4)
