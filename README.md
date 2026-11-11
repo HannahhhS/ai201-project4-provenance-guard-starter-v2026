@@ -303,6 +303,18 @@ curl.exe -s "http://127.0.0.1:5000/log?limit=2"
 - *What came back:* The human label was fine. The unsure label admitted uncertainty but didn't tell the writer what it meant for them, so "human or AI" could still read as suspicion. The AI label sounded certain and didn't tell the writer they could push back, even though my own lab report had already been labelled AI.
 - *What I changed:* I rewrote both myself. I added a second sentence to the unsure label saying it doesn't mean the work is AI-written and that no action is needed. I added to the AI label that the system can make mistakes and that the writer should appeal if they wrote it themselves. I kept "most likely", because the appeal sentence balances it.
 
+**Moment 3**
+
+- *What I asked for:* I asked Claude to generate five AI samples for criterion 2 and to split two of my own documents into ten pieces for criterion 1.
+- *What came back:* Claude suggested prompts on the same topics as my writing (astrophotography and my New Testament course), so the comparison would test who wrote it rather than what it was about. It split my documents into ten paragraphs, kept my typos, and left out the data tables.
+- *What I changed:* I asked for the pieces to alternate between the two documents, so the five human samples in criterion 2 weren't all from one report. I confirmed none of my writing used AI help or came from a group member, and I used the AI samples exactly as generated.
+
+**Moment 4**
+
+- *What I asked for:* I asked Claude for options to improve my criteria results in Milestone 5, focusing on the thresholds or the style signal.
+- *What came back:* Claude tested five options on my eval texts and the attacks before changing anything: two human thresholds (0.45 and 0.48), tighter style caps, and two reweightings. No option fixed criterion 2. Only the 0.48 threshold met criterion 3, but it did that by labelling one of the Claude samples human. Tightening the caps cut false accusations in half but made criterion 3 worse.
+- *What I changed:* I chose to tighten the style caps (spread 1.2 → 0.6, punctuation 0.15 → 0.08), because reducing false positives matters most to me. A wrong accusation costs a real writer more than a missed detection costs the site. I accepted that criterion 3 got worse and that two evasions now come back as human, and reported both.
+
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 
 ---
@@ -770,12 +782,24 @@ It helped with the mistake I care about most and hurt everything else. False acc
 <!-- For each attack still getting through and each criterion still missed:
      what you'd do, and why you stopped. -->
 
+After the improvement, 2 criteria are still missed and 21 attacks still get through.
 
+**Criterion 2 (AI vs. human gap, −0.041) and criterion 3 (only 1 of 3 labels).** What I'd do: replace or recalibrate the signals themselves. Signal one would need a newer model than GPT-2, one that actually finds modern AI text predictable, and signal two would need measures that don't treat repeated words and light punctuation as machine-like. Once the two groups separate, I'd revisit the thresholds so both confident labels can be reached. Why I stopped: no single setting fixes this. My Milestone 5 tests showed that every threshold, cap and weight I tried left the gap negative, and swapping the model is bigger than the one change this unit allows.
+
+**Evasion: EV01–EV09 (9).** What I'd do: the same signal fix as criteria 2 and 3, since even unedited AI text only reaches 0.38–0.52 now, so the evasions hardly have to try. For EV09 specifically, I'd score the text in chunks and flag it if any chunk reads strongly as AI, so a human opening can't average the rest away. Why I stopped: same reason as above, and EV01 and EV05 got worse (unsure → human) with my change, which I chose to accept in exchange for fewer false accusations.
+
+**False positive: FP02, FP03, FP05 (3).** What I'd do: for formal, technical and second-language writing, a high model score alone shouldn't be enough to say AI. I'd require both signals to clearly agree before giving the AI label. Why I stopped: that's a change to the combining rule, which would have been a second change. These three are the ones I'd most want fixed, especially FP03.
+
+**Prompt injection: PI02 (1).** What I'd do: strip or flag lines that look like instructions to a system ("SYSTEM:", "Return guess=…") before scoring, so they can't move perplexity. Why I stopped: nothing actually obeyed the instruction, and the cause is the same signal one weakness behind EV01. Fixing the signal matters more than filtering one phrasing.
+
+**Malformed: MF02–MF07, RQ06, RQ07 (8).** What I'd do: input validation in `app.py::submit`. Check that the body is a JSON object (RQ07) and `creator_id` is a string (RQ06), require a minimum number of real words (MF02–MF06), and catch any signal error as a logged 400 instead of a 500. For MF07, I'd make `words()` match letters in any script, not just `a-z`, so non-English writing isn't pinned at style 1.0. Why I stopped: I chose to spend my one change on the criteria. This is the fix I'd make next, because the two 500s leave nothing in the audit log.
 
 **The trade I'd make if this ran for real:**
 
 <!-- Two sentences. Fewer wrong accusations means more AI text getting through.
      Say which way you'd go and WHO PAYS FOR IT. -->
+
+I'd keep going the way my change went: fewer wrong accusations, even though more AI text gets through, because a false accusation can cost a real writer their reputation, and the writers my system accuses most are plain, careful and second-language writers who have the least room to argue back. The people who pay for that are honest writers on the site, whose work now sits next to AI text that got cleared, and readers, who can't fully trust that what they're reading is human.
 
 
 
